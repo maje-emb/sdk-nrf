@@ -1333,7 +1333,7 @@ static void bt_rpc_auth_cb_pairing_accept_rpc_handler(CborValue *value, void *ha
 		goto decoding_error;
 	}
 
-	if (auth_cb->pairing_accept) {
+	if (auth_cb && auth_cb->pairing_accept) {
 		result = auth_cb->pairing_accept(conn, &feat);
 	} else {
 		result = BT_SECURITY_ERR_INVALID_PARAM;
@@ -1369,7 +1369,7 @@ static void bt_rpc_auth_cb_passkey_display_rpc_handler(CborValue *value, void *h
 		goto decoding_error;
 	}
 
-	if (auth_cb->passkey_display) {
+	if (auth_cb && auth_cb->passkey_display) {
 		auth_cb->passkey_display(conn, passkey);
 	}
 
@@ -1394,7 +1394,7 @@ static void bt_rpc_auth_cb_passkey_entry_rpc_handler(CborValue *value, void *han
 		goto decoding_error;
 	}
 
-	if (auth_cb->passkey_entry) {
+	if (auth_cb && auth_cb->passkey_entry) {
 		auth_cb->passkey_entry(conn);
 	}
 
@@ -1421,7 +1421,7 @@ static void bt_rpc_auth_cb_passkey_confirm_rpc_handler(CborValue *value, void *h
 		goto decoding_error;
 	}
 
-	if (auth_cb->passkey_confirm) {
+	if (auth_cb && auth_cb->passkey_confirm) {
 		auth_cb->passkey_confirm(conn, passkey);
 	}
 
@@ -1449,7 +1449,7 @@ static void bt_rpc_auth_cb_oob_data_request_rpc_handler(CborValue *value, void *
 		goto decoding_error;
 	}
 
-	if (auth_cb->oob_data_request) {
+	if (auth_cb && auth_cb->oob_data_request) {
 		auth_cb->oob_data_request(conn, info);
 	}
 
@@ -1474,7 +1474,7 @@ static void bt_rpc_auth_cb_cancel_rpc_handler(CborValue *value, void *handler_da
 		goto decoding_error;
 	}
 
-	if (auth_cb->cancel) {
+	if (auth_cb && auth_cb->cancel) {
 		auth_cb->cancel(conn);
 	}
 
@@ -1498,7 +1498,7 @@ static void bt_rpc_auth_cb_pairing_confirm_rpc_handler(CborValue *value, void *h
 		goto decoding_error;
 	}
 
-	if (auth_cb->pairing_confirm) {
+	if (auth_cb && auth_cb->pairing_confirm) {
 		auth_cb->pairing_confirm(conn);
 	}
 
@@ -1525,7 +1525,7 @@ static void bt_rpc_auth_cb_pairing_complete_rpc_handler(CborValue *value, void *
 		goto decoding_error;
 	}
 
-	if (auth_cb->pairing_complete) {
+	if (auth_cb && auth_cb->pairing_complete) {
 		auth_cb->pairing_complete(conn, bonded);
 	}
 
@@ -1552,7 +1552,7 @@ static void bt_rpc_auth_cb_pairing_failed_rpc_handler(CborValue *value, void *ha
 		goto decoding_error;
 	}
 
-	if (auth_cb->pairing_failed) {
+	if (auth_cb && auth_cb->pairing_failed) {
 		auth_cb->pairing_failed(conn, reason);
 	}
 
@@ -1587,6 +1587,11 @@ int bt_conn_auth_cb_register(const struct bt_conn_auth_cb *cb)
 {
 	int res;
 	uint16_t flags = 0;
+
+	if (!cb) {
+		auth_cb = NULL;
+		return 0;
+	}
 
 #if defined(CONFIG_BT_SMP_APP_PAIRING_ACCEPT)
 	flags |= cb->pairing_accept ? FLAG_PAIRING_ACCEPT_PRESENT : 0;
