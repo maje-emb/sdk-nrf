@@ -1588,22 +1588,21 @@ int bt_conn_auth_cb_register(const struct bt_conn_auth_cb *cb)
 	int res;
 	uint16_t flags = 0;
 
-	if (!cb) {
-		auth_cb = NULL;
-		return 0;
-	}
-
+	if (cb != NULL) {
 #if defined(CONFIG_BT_SMP_APP_PAIRING_ACCEPT)
-	flags |= cb->pairing_accept ? FLAG_PAIRING_ACCEPT_PRESENT : 0;
+		flags |= cb->pairing_accept ? FLAG_PAIRING_ACCEPT_PRESENT : 0;
 #endif /* CONFIG_BT_SMP_APP_PAIRING_ACCEPT */
-	flags |= cb->passkey_display ? FLAG_PASSKEY_DISPLAY_PRESENT : 0;
-	flags |= cb->passkey_entry ? FLAG_PASSKEY_ENTRY_PRESENT : 0;
-	flags |= cb->passkey_confirm ? FLAG_PASSKEY_CONFIRM_PRESENT : 0;
-	flags |= cb->oob_data_request ? FLAG_OOB_DATA_REQUEST_PRESENT : 0;
-	flags |= cb->cancel ? FLAG_CANCEL_PRESENT : 0;
-	flags |= cb->pairing_confirm ? FLAG_PAIRING_CONFIRM_PRESENT : 0;
-	flags |= cb->pairing_complete ? FLAG_PAIRING_COMPLETE_PRESENT : 0;
-	flags |= cb->pairing_failed ? FLAG_PAIRING_FAILED_PRESENT : 0;
+		flags |= cb->passkey_display ? FLAG_PASSKEY_DISPLAY_PRESENT : 0;
+		flags |= cb->passkey_entry ? FLAG_PASSKEY_ENTRY_PRESENT : 0;
+		flags |= cb->passkey_confirm ? FLAG_PASSKEY_CONFIRM_PRESENT : 0;
+		flags |= cb->oob_data_request ? FLAG_OOB_DATA_REQUEST_PRESENT : 0;
+		flags |= cb->cancel ? FLAG_CANCEL_PRESENT : 0;
+		flags |= cb->pairing_confirm ? FLAG_PAIRING_CONFIRM_PRESENT : 0;
+		flags |= cb->pairing_complete ? FLAG_PAIRING_COMPLETE_PRESENT : 0;
+		flags |= cb->pairing_failed ? FLAG_PAIRING_FAILED_PRESENT : 0;
+	} else {
+		flags |= FLAG_AUTH_CB_IS_NULL;
+	}
 
 	res = bt_conn_auth_cb_register_on_remote(flags);
 
