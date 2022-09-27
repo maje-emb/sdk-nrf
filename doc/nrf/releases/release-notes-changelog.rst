@@ -314,7 +314,8 @@ Libraries for NFC
 Other libraries
 ---------------
 
-|no_changes_yet_note|
+* Added:
+  * :ref:`lib_sfloat` library.
 
 Common Application Framework (CAF)
 ----------------------------------
