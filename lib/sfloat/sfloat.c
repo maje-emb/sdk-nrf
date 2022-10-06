@@ -36,6 +36,8 @@
 /* Maximum positive float resolution. */
 #define FLOAT_POS_MAX (SFLOAT_EXP_FUNC_MAX * 1.0f * SFLOAT_MANTISSA_MAX)
 
+#define ABS(a) ((a < 0) ? (-a) : (a))
+
 /* Float type should use binary32 notation from the IEEE 754-2008 specification. */
 BUILD_ASSERT(sizeof(float) == sizeof(uint32_t));
 
@@ -59,10 +61,11 @@ static struct sfloat_desc sfloat_desc_from_float(float float_num)
 {
 	struct sfloat_desc sfloat = {0};
 	union float_enc float_enc;
+	uint16_t matissa_max;
+	uint16_t mantissa;
 	float float_abs;
 	bool inc_exp;
 	int8_t exp = 0;
-	uint16_t mantissa;
 
 	float_enc.val = sys_get_le32((uint8_t *) &float_num);
 
@@ -94,17 +97,18 @@ static struct sfloat_desc sfloat_desc_from_float(float float_num)
 	}
 
 	/* Find mantissa and exponent for the SFLOAT type. */
-	inc_exp = float_abs > SFLOAT_MANTISSA_MAX;
-	while ((exp > SFLOAT_EXP_MIN) && (exp < SFLOAT_EXP_MAX)) {
+	matissa_max = float_enc.sign ? ABS(SFLOAT_MANTISSA_MIN) : SFLOAT_MANTISSA_MAX;
+	inc_exp = float_abs > matissa_max;
+	while (exp > SFLOAT_EXP_MIN && exp < SFLOAT_EXP_MAX) {
 		if (inc_exp) {
-			if (float_abs < SFLOAT_MANTISSA_MAX) {
+			if (float_abs <= matissa_max) {
 				break;
 			}
 
 			float_abs /= 10;
 			exp++;
 		} else {
-			if (float_abs * 10 > SFLOAT_MANTISSA_MAX) {
+			if ((float_abs * 10) > matissa_max) {
 				break;
 			}
 
@@ -115,7 +119,7 @@ static struct sfloat_desc sfloat_desc_from_float(float float_num)
 
 	/* Round up the mantisssa. */
 	mantissa = (uint16_t) float_abs;
-	if ((float_abs - mantissa) * 10 >= 5) {
+	if (((float_abs - mantissa) * 10 >= 5) && (mantissa + 1 <= matissa_max)) {
 		mantissa++;
 	}
 
