@@ -115,7 +115,6 @@ static mpsl_timeslot_request_t timeslot_request_normal = {
 	.request_type = MPSL_TIMESLOT_REQ_TYPE_NORMAL,
 	.params.normal.hfclk = MPSL_TIMESLOT_HFCLK_CFG_XTAL_GUARANTEED,
 	.params.normal.priority = MPSL_TIMESLOT_PRIORITY_HIGH,
-	.params.normal.length_us = TIMESLOT_LENGTH_US,
 };
 
 struct dm_result result;
@@ -292,12 +291,13 @@ static int timeslot_request_early(void)
 	return err;
 }
 
-static int timeslot_request(uint32_t distance_from_last)
+static int timeslot_request(uint32_t distance_from_last, enum dm_dev_role role)
 {
 	int err;
 	enum mpsl_timeslot_call mpsl_api_call;
 
 	timeslot_request_normal.params.normal.distance_us = distance_from_last;
+	timeslot_request_normal.params.normal.length_us = TIMESLOT_LENGTH_US(role);
 	mpsl_api_call = MAKE_REQUEST_NORMAL;
 
 	err = k_msgq_put(&mpsl_api_msgq, &mpsl_api_call, K_FOREVER);
@@ -345,7 +345,7 @@ static void dm_start_ranging(void)
 	}
 
 	atomic_set(&timeslot_ctx.state, TIMESLOT_STATE_PENDING);
-	err = timeslot_request(TICKS_TO_US(distance));
+	err = timeslot_request(TICKS_TO_US(distance), req->dm_req.role);
 	if (err) {
 		atomic_set(&timeslot_ctx.state, TIMESLOT_STATE_IDLE);
 	}

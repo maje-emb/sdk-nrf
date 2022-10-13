@@ -66,6 +66,7 @@ int timeslot_queue_append(struct dm_request *req, uint32_t start_ref_tick)
 {
 	uint32_t start_time;
 	uint32_t delay;
+	uint32_t timeslot_length;
 	size_t list_size;
 	struct timeslot_entry *last, *item;
 
@@ -86,8 +87,9 @@ int timeslot_queue_append(struct dm_request *req, uint32_t start_ref_tick)
 		last = SYS_SLIST_PEEK_TAIL_CONTAINER(&timeslot_list, last, node);
 		list_unlock();
 
+		timeslot_length = TIMESLOT_LENGTH_US(req->role);
 		if ((time_distance_get(last->timeslot_req.start_time, start_time) <
-			     US_TO_RTC_TICKS(TIMESLOT_LENGTH_US + MIN_TIME_BETWEEN_TIMESLOTS_US))) {
+			     US_TO_RTC_TICKS(timeslot_length + MIN_TIME_BETWEEN_TIMESLOTS_US))) {
 			return -EBUSY;
 		}
 	}
