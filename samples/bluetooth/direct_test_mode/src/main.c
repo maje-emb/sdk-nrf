@@ -22,6 +22,10 @@ void main(void)
 
 	printk("Starting Direct Test Mode example\n");
 
+	if (IS_ENABLED(CONFIG_VESRION_BANNER)) {
+		printk("Sample version: %s\n", STRINGIFY(APP_VERSION));
+	}
+
 	if (!device_is_ready(uart)) {
 		printk("UART device not ready\n");
 	}
