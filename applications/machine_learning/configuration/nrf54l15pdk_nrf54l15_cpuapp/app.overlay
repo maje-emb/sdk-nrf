@@ -1,0 +1,54 @@
+/ {
+	chosen {
+		ncs,ml-app-ei-data-forwarder-uart = &uart20;
+		zephyr,console = &uart30;
+
+	};
+
+	sensor_sim: sensor-sim {
+		compatible = "nordic,sensor-sim";
+		acc-signal = "wave";
+	};
+
+	/* Redefine leds to fit CAF requirements. */
+	/delete-node/ leds;
+
+	leds0 {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		led0: led_0 {
+			gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
+			label = "Green LED 0";
+		};
+	};
+
+	leds1 {
+		compatible = "gpio-leds";
+		status = "okay";
+		led1: led_1 {
+			gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+			label = "Green LED 1";
+		};
+	};
+	led23 {
+		compatible = "gpio-leds";
+		status = "disabled";
+		led2: led_2 {
+			gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+			label = "Green LED 2";
+		};
+		led3: led_3 {
+			gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+			label = "Green LED 3";
+		};
+	};
+};
+
+&uart30 {
+	status = "okay";
+};
+
+&uart20 {
+	status = "okay";
+};
