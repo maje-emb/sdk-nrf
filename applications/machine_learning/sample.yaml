@@ -37,3 +37,21 @@ tests:
       - thingy53/nrf5340/cpuapp/ns
     tags: ci_build
     extra_args: CONF_FILE=prj_release.conf
+  applications.machine_learning.sensor_hub.zdebug.singlecore:
+    build_only: true
+    sysbuild: true
+    platform_allow: nrf54h20dk/nrf54h20/cpuapp
+    integration_platforms:
+      - nrf54h20dk/nrf54h20/cpuapp
+    tags: ci_build
+    extra_args: FILE_SUFFIX="singlecore"
+  applications.machine_learning.sensor_hub.zdebug:
+    build_only: true
+    sysbuild: true
+    platform_allow: nrf54h20dk/nrf54h20/cpuapp
+    integration_platforms:
+      - nrf54h20dk/nrf54h20/cpuapp
+    tags: ci_build
+    extra_args:
+      SB_CONFIG_ML_APP_INCLUDE_REMOTE_IMAGE=y
+      machine_learning_SNIPPET=nordic-ppr

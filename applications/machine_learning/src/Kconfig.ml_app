@@ -6,6 +6,13 @@
 
 menu "Application options"
 
+config ML_APP_INCLUDE_REMOTE_IMAGE
+	bool "Include remote image build"
+	depends on SOC_NRF54H20_CPUAPP
+	help
+	  This option is inherited from SB_CONFIG_ML_APP_INCLUDE_REMOTE_IMAGE.
+
+
 config ML_APP_SENSOR_EVENT_DESCR
 	string "Description of handled sensor event"
 	default ""

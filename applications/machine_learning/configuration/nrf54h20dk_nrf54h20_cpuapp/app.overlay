@@ -1,0 +1,101 @@
+/*
+ * Copyright (c) 2022 Nordic Semiconductor ASA
+ *
+ * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ */
+
+/ {
+	chosen {
+		zephyr,console = &uart136;
+	};
+
+	allocatable_ram {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/* Configure RAM region.
+		 * This is done to ensure correct UICR generation.
+		 */
+		ram3x_app_ppr: memory@2fc00000 {
+			compatible = "nordic,allocatable-ram";
+			reg = <0x2fc00000 DT_SIZE_K(32)>;
+			perm-read;
+			perm-write;
+		};
+	};
+
+	sensor_sim: sensor-sim {
+		compatible = "nordic,sensor-sim";
+		acc-signal = "wave";
+	};
+
+	/* Redefine leds to fit CAF requirements. */
+	/delete-node/ leds;
+
+	leds012 {
+		compatible = "gpio-leds";
+		status = "okay";
+		label = "ML State LED";
+
+		led0: led_0 {
+			gpios = < &gpio9 0 GPIO_ACTIVE_HIGH >;
+			label = "Green LED 0";
+		};
+
+		led1: led_1 {
+			gpios = < &gpio9 1 GPIO_ACTIVE_HIGH >;
+			label = "Green LED 1";
+		};
+
+		led2: led_2 {
+			gpios = < &gpio9 2 GPIO_ACTIVE_HIGH >;
+			label = "Green LED 2";
+		};
+	};
+
+	leds3 {
+		compatible = "gpio-leds";
+		led3: led_3 {
+			gpios = < &gpio9 3 GPIO_ACTIVE_HIGH >;
+			label = "Green LED 3";
+		};
+	};
+};
+
+
+// /delete-node/ &cpuapp_rx_partitions;
+// /delete-node/ &cpuapp_rw_partitions;
+
+// &mram1x {
+// 	cpuapp_rx_partitions: cpuapp-rx-partitions {
+// 		compatible = "nordic,owned-partitions", "fixed-partitions";
+// 		status = "disabled";
+// 		perm-read;
+// 		perm-execute;
+// 		perm-secure;
+// 		#address-cells = <1>;
+// 		#size-cells = <1>;
+
+// 		cpuapp_slot0_partition: partition@100000 {
+// 			reg = <0x100000 DT_SIZE_K(512)>;
+// 		};
+
+// 		cpuppr_code_partition: partition@180000 {
+// 			reg = <0x180000 DT_SIZE_K(64)>;
+// 		};
+// 	};
+
+// 	cpuapp_rw_partitions: cpuapp-rw-partitions {
+// 		compatible = "nordic,owned-partitions", "fixed-partitions";
+// 		status = "disabled";
+// 		perm-read;
+// 		perm-write;
+// 		perm-secure;
+// 		#address-cells = <1>;
+// 		#size-cells = <1>;
+
+// 		storage_partition: partition@190000 {
+// 			reg = <0x190000 DT_SIZE_K(24)>;
+// 		};
+// 	};
+// };
