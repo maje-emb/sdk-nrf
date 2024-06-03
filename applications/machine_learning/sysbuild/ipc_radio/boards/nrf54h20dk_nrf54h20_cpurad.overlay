@@ -14,3 +14,7 @@
 &uart135 {
 	status = "disabled";
 };
+
+&spi131 {
+	status = "disabled";
+};

@@ -69,3 +69,51 @@ ipc1: &cpuapp_cpuppr_ipc {
 &cpuapp_bellboard {
 	status = "okay";
 };
+
+/ {
+	aliases {
+		accel0 = &adxl362;
+	};
+};
+
+&pinctrl {
+	spi131_default: spi131_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_MISO, 1, 6)>,
+				<NRF_PSEL(SPIM_MOSI, 1, 5)>,
+				<NRF_PSEL(SPIM_SCK, 1, 1)>;
+		};
+	};
+
+	spi131_sleep: spi131_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_MISO, 1, 6)>,
+				<NRF_PSEL(SPIM_MOSI, 1, 5)>,
+				<NRF_PSEL(SPIM_SCK, 1, 1)>;
+				low-power-enable;
+		};
+	};
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&spi131 {
+	compatible = "nordic,nrf-spim";
+	status = "okay";
+	pinctrl-0 = <&spi131_default>;
+	pinctrl-1 = <&spi131_sleep>;
+	pinctrl-names = "default", "sleep";
+	overrun-character = <0x00>;
+	cs-gpios = <&gpio1 2 GPIO_ACTIVE_LOW>;
+	memory-regions = <&cpuapp_dma_region>;
+
+	adxl362: adxl362@0 {
+		compatible = "adi,adxl362";
+		status = "okay";
+		reg = <1>;
+		int1-gpios = <&gpio1 8 (GPIO_ACTIVE_HIGH)>;
+		spi-max-frequency = <DT_FREQ_M(8)>;
+	};
+};

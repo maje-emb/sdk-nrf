@@ -55,6 +55,10 @@ ipc1: &cpuapp_cpuppr_ipc {
 	status = "okay";
 };
 
+&uart135 {
+	status = "reserved";
+};
+
 /*
  * Expand PPR memory region.
  * Place aggregator buffers in PPR memory region.
@@ -83,3 +87,12 @@ ipc1: &cpuapp_cpuppr_ipc {
 		reg = <0x10800 0x600>;
 	};
 };
+
+&spi131 {
+	status = "reserved";
+	interrupt-parent = <&cpuppr_clic>;
+};
+
+// &gpio1 {
+// 	status = "reserved";
+// };
