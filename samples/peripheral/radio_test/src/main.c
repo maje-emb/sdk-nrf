@@ -9,7 +9,9 @@
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/clock_control/nrf_clock_control.h>
 #endif /* #if defined(CONFIG_CLOCK_CONTROL_NRF) */
-
+#if defined(NRF54L15_XXAA)
+#include <hal/nrf_clock.h>
+#endif /* #if defined(NRF54L15_XXAA) */
 
 #if defined(CONFIG_CLOCK_CONTROL_NRF)
 static void clock_init(void)
@@ -40,6 +42,10 @@ static void clock_init(void)
 			return;
 		}
 	} while (err);
+
+#if defined(NRF54L15_XXAA)
+	nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_PLLSTART);
+#endif /* defined(NRF54L15_XXAA) */
 
 	printk("Clock has started\n");
 }
