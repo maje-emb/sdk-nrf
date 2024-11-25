@@ -42,6 +42,10 @@
 	};
 };
 
+&uart136 {
+	zephyr,pm-device-runtime-auto;
+};
+
 &cpuppr_vevif {
 	status = "okay";
 };
