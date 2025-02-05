@@ -34,9 +34,16 @@ static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
 	 RADIO_SHORTS_ADDRESS_RSSISTART_Msk |                                  \
 	 RADIO_SHORTS_DISABLED_RSSISTOP_Msk)
 
+const struct device *radio_clk_dev = DEVICE_DT_GET_OR_NULL(DT_CLOCKS_CTLR(DT_NODELABEL(radio)));
+struct onoff_client radio_cli;
+K_SEM_DEFINE(sem, 0, 1);
+K_SEM_DEFINE(ready_sem, 1, 1);
+
 void event_handler(struct esb_evt const *event)
 {
 	ready = true;
+	nrf_clock_control_cancel_or_release(radio_clk_dev, NULL, &radio_cli);
+	k_sem_give(&ready_sem);
 
 	switch (event->evt_id) {
 	case ESB_EVENT_TX_SUCCESS:
@@ -103,31 +110,8 @@ int clocks_start(void)
 
 int clocks_start(void)
 {
-	int err;
-	int res;
-	const struct device *radio_clk_dev =
-		DEVICE_DT_GET_OR_NULL(DT_CLOCKS_CTLR(DT_NODELABEL(radio)));
-	struct onoff_client radio_cli;
-
 	/** Keep radio domain powered all the time to reduce latency. */
 	nrf_lrcconf_poweron_force_set(NRF_LRCCONF010, NRF_LRCCONF_POWER_DOMAIN_1, true);
-
-	sys_notify_init_spinwait(&radio_cli.notify);
-
-	err = nrf_clock_control_request(radio_clk_dev, NULL, &radio_cli);
-
-	do {
-		err = sys_notify_fetch_result(&radio_cli.notify, &res);
-		if (!err && res) {
-			LOG_ERR("Clock could not be started: %d", res);
-			return res;
-		}
-	} while (err == -EAGAIN);
-
-#if defined(NRF54L15_XXAA)
-	/* MLTPAN-20 */
-	nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_PLLSTART);
-#endif /* defined(NRF54L15_XXAA) */
 
 	LOG_DBG("HF clock started");
 	return 0;
@@ -194,6 +178,11 @@ static void leds_update(uint8_t value)
 	dk_set_leds(leds_mask);
 }
 
+static void clock_handler(struct onoff_manager *mgr, int res)
+{
+	k_sem_give(&sem);
+}
+
 int main(void)
 {
 	int err;
@@ -222,20 +211,27 @@ int main(void)
 
 	tx_payload.noack = false;
 	while (1) {
-		if (ready) {
-			ready = false;
-			esb_flush_tx();
-			leds_update(tx_payload.data[1]);
 
-			err = esb_write_payload(&tx_payload);
-			if (err) {
-				LOG_ERR("Payload write failed, err %d", err);
-			}
-			tx_payload.data[1]++;
-			if (tx_payload.data[1] == 0x00) {
-				tx_payload.data[2]++;
-			}
+		k_sem_take(&ready_sem, K_MSEC(100));
+
+		ready = false;
+
+		sys_notify_init_callback(&radio_cli.notify, clock_handler);
+		err = nrf_clock_control_request(radio_clk_dev, NULL, &radio_cli);
+
+		k_sem_take(&sem, K_FOREVER);
+
+		esb_flush_tx();
+		leds_update(tx_payload.data[1]);
+
+		err = esb_write_payload(&tx_payload);
+		if (err) {
+			LOG_ERR("Payload write failed, err %d", err);
 		}
-		k_sleep(K_MSEC(1));
+		tx_payload.data[1]++;
+		if (tx_payload.data[1] == 0x00) {
+			tx_payload.data[2]++;
+		}
+
 	}
 }
