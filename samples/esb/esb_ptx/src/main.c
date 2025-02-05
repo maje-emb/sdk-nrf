@@ -22,6 +22,9 @@
 #include <hal/nrf_lrcconf.h>
 #endif
 
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+
 LOG_MODULE_REGISTER(esb_ptx, CONFIG_ESB_PTX_APP_LOG_LEVEL);
 
 static bool ready = true;
@@ -38,6 +41,8 @@ const struct device *radio_clk_dev = DEVICE_DT_GET_OR_NULL(DT_CLOCKS_CTLR(DT_NOD
 struct onoff_client radio_cli;
 K_SEM_DEFINE(sem, 0, 1);
 K_SEM_DEFINE(ready_sem, 1, 1);
+
+static const struct gpio_dt_spec esb_io_test = GPIO_DT_SPEC_GET(DT_NODELABEL(esb_io_test), gpios);
 
 void event_handler(struct esb_evt const *event)
 {
@@ -189,6 +194,8 @@ int main(void)
 
 	LOG_INF("Enhanced ShockBurst ptx sample");
 
+	gpio_pin_configure_dt(&esb_io_test, GPIO_OUTPUT_INACTIVE);
+
 	err = clocks_start();
 	if (err) {
 		return 0;
@@ -214,12 +221,12 @@ int main(void)
 
 		k_sem_take(&ready_sem, K_MSEC(100));
 
-		ready = false;
-
 		sys_notify_init_callback(&radio_cli.notify, clock_handler);
 		err = nrf_clock_control_request(radio_clk_dev, NULL, &radio_cli);
 
+		gpio_pin_set_dt(&esb_io_test, 1);
 		k_sem_take(&sem, K_FOREVER);
+		gpio_pin_set_dt(&esb_io_test, 0);
 
 		esb_flush_tx();
 		leds_update(tx_payload.data[1]);

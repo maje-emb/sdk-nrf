@@ -39,6 +39,14 @@
 	chosen {
 		zephyr,console = &uart136;
 	};
+
+	esb_gpio {
+		compatible = "gpio-leds";
+		esb_io_test: esb-io-test {
+			gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;
+			label = "esb io test";
+		};
+	};
 };
 
 &gpio9 {
