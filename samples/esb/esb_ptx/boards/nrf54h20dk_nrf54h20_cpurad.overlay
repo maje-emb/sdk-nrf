@@ -52,7 +52,16 @@
 	status = "okay";
 };
 
+&gpio1 {
+	status = "okay";
+};
+
 &gpiote130 {
+	owned-channels = <0 1 2 3 4 5 6 7>;
+	status = "okay";
+};
+
+&gpiote0 {
 	owned-channels = <0 1 2 3 4 5 6 7>;
 	status = "okay";
 };
