@@ -29,10 +29,21 @@
 
 LOG_MODULE_REGISTER(esb_ptx, CONFIG_ESB_PTX_APP_LOG_LEVEL);
 
+#define TESTSTRING " - 32 byte arbitrary data packet"
+
+
 static bool ready = true;
 static struct esb_payload rx_payload;
-static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
-	0x01, 0x00, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
+// static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
+// 	0x01, 0x00, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
+
+struct esb_payload tx_payload = {
+        .length = 32,
+        .pipe   = 0,
+        .rssi   = 0,
+        .noack  = false,
+        .data   = TESTSTRING
+};
 
 #define _RADIO_SHORTS_COMMON                                                   \
 	(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk |         \
@@ -203,6 +214,7 @@ static void leds_update(uint8_t value)
 	dk_set_leds(leds_mask);
 }
 
+uint16_t cnt;
 int main(void)
 {
 	int err;
@@ -241,9 +253,15 @@ int main(void)
 	LOG_INF("Initialization complete");
 	LOG_INF("Sending test packet");
 
+	err = esb_set_address_length(3);
+	if (err) {
+		LOG_ERR("Address length setting failed, err %d", err);
+		return 0;
+	}
+
 	tx_payload.noack = false;
 	while (1) {
-		if (ready) {
+		if (ready && cnt < 1000) {
 			ready = false;
 			esb_flush_tx();
 			leds_update(tx_payload.data[1]);
@@ -252,8 +270,9 @@ int main(void)
 			if (err) {
 				LOG_ERR("Payload write failed, err %d", err);
 			}
-			tx_payload.data[1]++;
+			tx_payload.data[0]++;
+			cnt++;
 		}
-		k_sleep(K_MSEC(100));
+		k_sleep(K_MSEC(10));
 	}
 }

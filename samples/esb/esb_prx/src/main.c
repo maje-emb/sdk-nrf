@@ -44,6 +44,7 @@ static void leds_update(uint8_t value)
 	dk_set_leds(leds_mask);
 }
 
+volatile uint16_t cnt;
 void event_handler(struct esb_evt const *event)
 {
 	switch (event->evt_id) {
@@ -64,6 +65,7 @@ void event_handler(struct esb_evt const *event)
 				rx_payload.data[5], rx_payload.data[6],
 				rx_payload.data[7]);
 
+			LOG_DBG("cnt %d", ++cnt);
 			leds_update(rx_payload.data[1]);
 		} else {
 			LOG_ERR("Error while reading rx packet");
@@ -248,6 +250,27 @@ int main(void)
 		LOG_ERR("RX setup failed, err %d", err);
 		return 0;
 	}
+
+
+	err = esb_stop_rx();
+	if (err) {
+		LOG_ERR("RX stop failed, err %d", err);
+		return 0;
+	}
+
+	err = esb_set_address_length(3);
+	if (err) {
+		LOG_ERR("Address length setting failed, err %d", err);
+		return 0;
+	}
+
+	err = esb_start_rx();
+	if (err) {
+		LOG_ERR("RX setup failed, err %d", err);
+		return 0;
+	}
+
+
 
 	/* return to idle thread */
 	return 0;
