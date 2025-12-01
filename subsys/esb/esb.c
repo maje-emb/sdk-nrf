@@ -23,9 +23,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/drivers/gpio.h>
-#if NRF54H_ERRATA_216_PRESENT
+#if NRF54H_ERRATA_216_ENABLE_WORKAROUND
 #include <zephyr/drivers/mbox.h>
-#endif /* NRF54H_ERRATA_216_PRESENT */
+#endif /* NRF54H_ERRATA_216_ENABLE_WORKAROUND */
 
 #include <mpsl_fem_protocol_api.h>
 
@@ -267,12 +267,12 @@ enum {
 static atomic_t errata_216_status = ATOMIC_INIT(ERRATA_216_DISABLED);
 static uint32_t errata_216_timer_shorts;
 
-#if NRF54H_ERRATA_216_PRESENT
+#if NRF54H_ERRATA_216_ENABLE_WORKAROUND
 static const struct mbox_dt_spec on_channel =
 			MBOX_DT_SPEC_GET(DT_NODELABEL(cpurad_cpusys_errata216_mboxes), on_req);
 static const struct mbox_dt_spec off_channel =
 			MBOX_DT_SPEC_GET(DT_NODELABEL(cpurad_cpusys_errata216_mboxes), off_req);
-#endif /* NRF54H_ERRATA_216_PRESENT */
+#endif /* NRF54H_ERRATA_216_ENABLE_WORKAROUND */
 
 static esb_event_handler event_handler;
 static struct esb_payload *current_payload;
@@ -415,13 +415,21 @@ static inline void apply_errata143_workaround(void)
 	}
 }
 
+static bool errata_216_is_enabled(void)
+{
+	if (nrf54h_errata_216() && IS_ENABLED(NRF54H_ERRATA_216_ENABLE_WORKAROUND)) {
+		return true;
+	}
+	return false;
+}
+
 static void errata_216_on(void)
 {
-	if (!nrf54h_errata_216()) {
+	if (!errata_216_is_enabled()) {
 		return;
 	}
 
-#if NRF54H_ERRATA_216_PRESENT
+#if NRF54H_ERRATA_216_ENABLE_WORKAROUND
 	if (mbox_send_dt(&on_channel, NULL) != 0) {
 		LOG_ERR("Failed to enable Errata 216");
 		/* Should not happen. */
@@ -429,16 +437,16 @@ static void errata_216_on(void)
 	} else {
 		atomic_set(&errata_216_status, ERRATA_216_ENABLED);
 	}
-#endif /* NRF54H_ERRATA_216_PRESENT */
+#endif /* NRF54H_ERRATA_216_ENABLE_WORKAROUND */
 }
 
 static void errata_216_off(void)
 {
-	if (!nrf54h_errata_216()) {
+	if (!errata_216_is_enabled()) {
 		return;
 	}
 
-#if NRF54H_ERRATA_216_PRESENT
+#if NRF54H_ERRATA_216_ENABLE_WORKAROUND
 	if (mbox_send_dt(&off_channel, NULL) != 0) {
 		LOG_ERR("Failed to disable Errata 216");
 		/* Should not happen. */
@@ -446,7 +454,7 @@ static void errata_216_off(void)
 	} else {
 		atomic_set(&errata_216_status, ERRATA_216_DISABLED);
 	}
-#endif /* NRF54H_ERRATA_216_PRESENT */
+#endif /* NRF54H_ERRATA_216_ENABLE_WORKAROUND */
 }
 
 static void apply_radio_init_workarounds(void)
@@ -687,7 +695,7 @@ void esb_fem_for_tx_retry_clear(void)
 
 static void radio_start(void)
 {
-	if (nrf54h_errata_216() && atomic_get(&errata_216_status) == ERRATA_216_DISABLED) {
+	if (errata_216_is_enabled() && atomic_get(&errata_216_status) == ERRATA_216_DISABLED) {
 		errata_216_on();
 
 		nrfx_timer_compare(&esb_timer, NRF_TIMER_CC_CHANNEL3,
@@ -1220,7 +1228,7 @@ static void esb_timer_handler(nrf_timer_event_t event_type, void *context)
 			(NRF_TIMER_SHORT_COMPARE2_CLEAR_MASK | NRF_TIMER_SHORT_COMPARE2_STOP_MASK));
 	}
 
-	if (nrf54h_errata_216() && event_type == NRF_TIMER_EVENT_COMPARE3) {
+	if (errata_216_is_enabled() && event_type == NRF_TIMER_EVENT_COMPARE3) {
 		nrf_timer_int_disable(esb_timer.p_reg, NRF_TIMER_INT_COMPARE3_MASK);
 
 		if (atomic_get(&errata_216_status) == ERRATA_216_ENABLED) {
@@ -1455,7 +1463,7 @@ static void on_radio_disabled_tx(void)
 	nrfx_timer_compare(&esb_timer, NRF_TIMER_CC_CHANNEL1,
 			   (esb_cfg.retransmit_delay - ramp_up), false);
 
-	if (nrf54h_errata_216()) {
+	if (errata_216_is_enabled()) {
 		int32_t min_time = esb_cfg.retransmit_delay - wait_for_ack_timeout_us -
 							      ramp_up - ADDR_EVENT_LATENCY_US;
 		if (min_time > ERRATA_216_MIN_TIME_TO_DISABLE_US) {
@@ -1601,7 +1609,7 @@ static void on_radio_disabled_tx_wait_for_ack(void)
 			esb_fem_for_tx_set(true);
 
 			radio_start();
-		} else if (nrf54h_errata_216()) {
+		} else if (errata_216_is_enabled()) {
 			uint16_t ramp_up = esb_cfg.use_fast_ramp_up ? TX_FAST_RAMP_UP_TIME_US
 								    : TX_RAMP_UP_TIME_US;
 			int32_t min_time = esb_cfg.retransmit_delay - ramp_up -
